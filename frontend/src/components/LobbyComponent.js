@@ -1,17 +1,41 @@
 // LobbyComponent.js
-import React, { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import React, { useContext, useState, useEffect } from "react";
+import { SocketContext } from "../context/SocketContext";
 
 const LobbyComponent = () => {
-  const { lobbies } = useContext(AuthContext);
+    const socket = useContext(SocketContext);
+    const [lobbies, setLobbies] = useState([]);
+    
+    useEffect(() => {
+      if (!socket) return;
+    
+      socket.on("lobbiesUpdated", (newLobbies) => {
+        setLobbies(newLobbies);
+      });
+    
+      return () => {
+        socket.off("lobbiesUpdated");
+      };
+    }, [socket]);
 
+    function handleJoinLobby(lobbyId) {
+        if (!socket) return;
+        socket.emit("joinLobby", { lobbyId });
+    }
 
-  //Map lobbies object recieved from server into cards. When a lobby card is clicked on, redirect user to the corresponding lobby
   return (
     <div>
-      <h2>Welcome to Empowered Listening - Lobbies</h2>
-      
-    </div>
+        <h2>Available Lobbies</h2>
+        <ul>
+        {lobbies.map((lobby) => (
+            <li key={lobby.id}>
+            {lobby.title} 
+            {lobby.desc}
+            <button onClick={() => handleJoinLobby(lobby.id)}>Join</button>
+            </li>
+        ))}
+        </ul>
+  </div>
   );
 };
 

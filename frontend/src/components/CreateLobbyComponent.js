@@ -1,9 +1,11 @@
 // LobbyComponent.js
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { SocketContext } from "../context/SocketContext";
 
 const CreateLobbyComponent = () => {
-  const { lobbies } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const socket = useContext(SocketContext);
   const [lobbyTitle, setLobbyTitle] = useState("");
   const [lobbyDesc, setLobbyDesc] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -14,16 +16,14 @@ const CreateLobbyComponent = () => {
     // Convert local datetime string -> JS Date -> ISO string
     const localDate = new Date(startTime); 
     const isoString = localDate.toISOString();
-    // if (lobbyTitle.trim() && socket) {
-    //   socket.emit("createLobby", {
-    //     lobbyTitle,
-    //     lobbyDesc,
-    //     startTime,
-    //     authorId: user.uid,
-    //     authorName: user.displayName,
-    //   });
-    // }
-    console.log("It worked! " + lobbyTitle + " " + lobbyDesc + " " + isoString)
+    if (lobbyTitle.trim() && socket) {
+      socket.emit("createLobby", {
+        title: lobbyTitle,
+        desc: lobbyDesc,
+        startTime: isoString,
+      });
+    }
+
   };
 
   return (
