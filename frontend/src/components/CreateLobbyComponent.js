@@ -1,7 +1,7 @@
-// LobbyComponent.js
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { SocketContext } from "../context/SocketContext";
+import { useNavigate } from "react-router-dom";
 
 const CreateLobbyComponent = () => {
   const { user } = useContext(AuthContext);
@@ -9,13 +9,35 @@ const CreateLobbyComponent = () => {
   const [lobbyTitle, setLobbyTitle] = useState("");
   const [lobbyDesc, setLobbyDesc] = useState("");
   const [startTime, setStartTime] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    // When the server confirms the lobby was created
+    const handleLobbyCreated = (newLobby) => {
+      // Immediately join it
+      socket.emit("joinLobby", { lobbyId: newLobby.id });
+    };
+
+    // The user will then receive "lobbyJoined" from the server,
+    // which triggers a redirect in the LobbyComponent OR in a new effect if we want it here.
+    // We can also navigate from here if we want:
+    //   socket.on("lobbyJoined", ({ lobbyId }) => navigate(`/lobby/${lobbyId}`));
+
+    socket.on("lobbyCreated", handleLobbyCreated);
+
+    return () => {
+      socket.off("lobbyCreated", handleLobbyCreated);
+    };
+  }, [socket, navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Convert local datetime string -> JS Date -> ISO string
-    const localDate = new Date(startTime); 
+    const localDate = new Date(startTime);
     const isoString = localDate.toISOString();
+
     if (lobbyTitle.trim() && socket) {
       socket.emit("createLobby", {
         title: lobbyTitle,
@@ -23,7 +45,6 @@ const CreateLobbyComponent = () => {
         startTime: isoString,
       });
     }
-
   };
 
   return (
@@ -50,7 +71,6 @@ const CreateLobbyComponent = () => {
         />
         <button type="submit">Submit</button>
       </form>
-      
     </div>
   );
 };

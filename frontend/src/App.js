@@ -1,22 +1,21 @@
 // App.js
 import React, { useContext, useState } from "react";
 import { AuthContext } from "./context/AuthContext";
-import SpeakerComponent from "./components/SpeakerComponent";
-import TranscriptComponent from "./components/TranscriptComponent";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+// Our components
+import LobbyComponent from "./components/LobbyComponent";
+import CreateLobbyComponent from "./components/CreateLobbyComponent";
 import LoginComponent from "./components/LoginComponent";
-import QuestionFormComponent from "./components/QuestionFormComponent";
+import SpeakerComponent from "./components/SpeakerComponent";
 import ModeratorPanelComponent from "./components/ModeratorPanelComponent";
+import QuestionFormComponent from "./components/QuestionFormComponent";
+import TranscriptComponent from "./components/TranscriptComponent";
 import QuestionListComponent from "./components/QuestionListComponent";
-import LobbyComponent from './components/LobbyComponent';
-import CreateLobbyComponent from './components/CreateLobbyComponent';
+import LobbyRoomPage from "./pages/LobbyRoomPage";
 
 function App() {
   const { user, loading, logout } = useContext(AuthContext);
-  const [showCreateLobby, setShowCreateLobby] = useState(false);
-
-  const handleCreateLobbyClick = () => {
-    setShowCreateLobby(true);
-  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -27,34 +26,26 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <button onClick={logout}>Logout</button>
-      {showCreateLobby ? (
-        <CreateLobbyComponent />
-      ) : (
-        <div>
-        {/* If moderator, show button */}
-          {user.role === "moderator" && (
-              <button onClick={handleCreateLobbyClick}>
-                Go to Create Lobby
-              </button>
-          )}
-          <LobbyComponent />
-        </div>
-      )}
-    </div>
-  );
+    <BrowserRouter>
+      <div className="App">
+        <button onClick={logout}>Logout</button>
 
-  // return (
-  //   <div className="App">
-  //     <button onClick={logout}>Logout</button>
-  //     {user.role === "speaker" && <SpeakerComponent />}
-  //     {user.role === "moderator" && <ModeratorPanelComponent />}
-  //     {user.role === "listener" && <QuestionFormComponent />}
-  //     <TranscriptComponent />
-  //     <QuestionListComponent />
-  //   </div>
-  // );
+        <Routes>
+          {/* List of lobbies */}
+          <Route path="/lobbies" element={<LobbyComponent />} />
+
+          {/* Create a new lobby (moderators only, but let's not block it for now) */}
+          <Route path="/create-lobby" element={<CreateLobbyComponent />} />
+
+          {/* The actual lobby room: /lobby/:lobbyId */}
+          <Route path="/lobby/:lobbyId" element={<LobbyRoomPage />} />
+
+          {/* If we go to "/", redirect to "/lobbies" */}
+          <Route path="/" element={<Navigate to="/lobbies" replace />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
 }
 
 export default App;
