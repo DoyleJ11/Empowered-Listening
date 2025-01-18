@@ -11,7 +11,10 @@ const LobbyComponent = () => {
   useEffect(() => {
     if (!socket) return;
 
+    socket.emit("getLobbies");
+
     socket.on("lobbiesUpdated", (newLobbies) => {
+      console.log("[LobbyComponent] got lobbiesUpdated:", newLobbies);
       setLobbies(newLobbies);
     });
 

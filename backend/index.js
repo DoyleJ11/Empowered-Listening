@@ -86,12 +86,18 @@ io.on("connection", async (socket) => {
 
   socket.emit("lobbiesUpdated", lobbies);
 
+  socket.on("getLobbies", () => {
+    socket.emit("lobbiesUpdated", lobbies);
+  });
+
   // Moderator creating a new lobby
   socket.on("createLobby", async (data) => {
     if (socket.userRole !== "moderator") {
       console.error("Unauthorized createLobby event from", socket.userId);
       return;
     }
+
+    console.log("Received createLobby event with data:", data);
 
     const newLobby = {
       id: uuidv4(),
@@ -141,11 +147,24 @@ io.on("connection", async (socket) => {
 
   socket.on("leaveLobby", () => {
     if (socket.lobbyId) {
-      socket.leave(socket.lobbyId);
-      socket.emit("lobbyLeft", { lobbyId: socket.lobbyId });
+      const oldLobbyId = socket.lobbyId;
+  
+      socket.leave(oldLobbyId);
+      socket.emit("lobbyLeft", { lobbyId: oldLobbyId });
       socket.lobbyId = null;
+  
+      // Now check if that room is empty
+      const room = io.sockets.adapter.rooms.get(oldLobbyId);
+      if (!room || room.size === 0) {
+        // Remove the lobby from the "lobbies" array
+        lobbies = lobbies.filter((l) => l.id !== oldLobbyId);
+        // Broadcast an updated list
+        io.emit("lobbiesUpdated", lobbies);
+        console.log(`Lobby ${oldLobbyId} was empty and removed.`);
+      }
     }
   });
+  
 
   //
   //   _____                      _       _____                            _ _   _                _____      _
@@ -261,5 +280,21 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
     recognizeStream.destroy();
+  
+    const oldLobbyId = socket.lobbyId;
+    if (oldLobbyId) {
+      // The user was in a lobby
+      // Check if that user was the last one
+      const room = io.sockets.adapter.rooms.get(oldLobbyId);
+  
+      // This user is automatically removed from the room set on disconnect
+      if (!room || room.size === 0) {
+        // remove from lobbies
+        lobbies = lobbies.filter((l) => l.id !== oldLobbyId);
+        io.emit("lobbiesUpdated", lobbies);
+        console.log(`Lobby ${oldLobbyId} removed because it became empty on disconnect.`);
+      }
+    }
   });
+  
 });

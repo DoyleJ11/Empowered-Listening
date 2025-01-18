@@ -1,7 +1,7 @@
 // App.js
 import React, { useContext, useState } from "react";
 import { AuthContext } from "./context/AuthContext";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
 // Our components
 import LobbyComponent from "./components/LobbyComponent";
@@ -17,6 +17,8 @@ import LobbyRoomPage from "./pages/LobbyRoomPage";
 function App() {
   const { user, loading, logout } = useContext(AuthContext);
 
+  const navigate = useNavigate();
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -25,10 +27,16 @@ function App() {
     return <LoginComponent />;
   }
 
+
   return (
-    <BrowserRouter>
       <div className="App">
         <button onClick={logout}>Logout</button>
+
+        {user.role === "moderator" && (
+    <button onClick={() => navigate("/create-lobby")}>
+      Go to Create Lobby
+    </button>
+  )}
 
         <Routes>
           {/* List of lobbies */}
@@ -44,7 +52,6 @@ function App() {
           <Route path="/" element={<Navigate to="/lobbies" replace />} />
         </Routes>
       </div>
-    </BrowserRouter>
   );
 }
 

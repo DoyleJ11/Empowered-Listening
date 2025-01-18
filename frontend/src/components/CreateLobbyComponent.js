@@ -1,3 +1,4 @@
+//CreateLobbyComponent.js
 import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { SocketContext } from "../context/SocketContext";
@@ -20,20 +21,23 @@ const CreateLobbyComponent = () => {
       socket.emit("joinLobby", { lobbyId: newLobby.id });
     };
 
-    // The user will then receive "lobbyJoined" from the server,
-    // which triggers a redirect in the LobbyComponent OR in a new effect if we want it here.
-    // We can also navigate from here if we want:
-    //   socket.on("lobbyJoined", ({ lobbyId }) => navigate(`/lobby/${lobbyId}`));
+    const handleLobbyJoined = ({ lobbyId }) => {
+        navigate(`/lobby/${lobbyId}`);
+      };
 
     socket.on("lobbyCreated", handleLobbyCreated);
+    socket.on("lobbyJoined", handleLobbyJoined);
 
     return () => {
       socket.off("lobbyCreated", handleLobbyCreated);
+      socket.off("lobbyJoined", handleLobbyJoined);
     };
   }, [socket, navigate]);
 
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log("handleSubmit called. socket:", socket);
 
     const localDate = new Date(startTime);
     const isoString = localDate.toISOString();
